@@ -152,3 +152,24 @@ func (b *binder) FilterConn(userID, event string) ([]*Conn, error) {
 
 	return []*Conn{}, nil
 }
+
+//根据event获取所有用户
+func (b *binder) FindUsers(event string) ([]string, error) {
+	if event == "" {
+		return nil, errors.New("event can't be empty")
+	}
+
+	b.mu.RLock()
+	defer b.mu.RUnlock()
+
+	userIds := make([]string, 0)
+	for userId, eventConns := range b.userID2EventConnMap {
+		conns := *eventConns
+		for _, ec := range conns {
+			if ec.Event == event {
+				userIds = append(userIds, userId)
+			}
+		}
+	}
+	return userIds, nil
+}

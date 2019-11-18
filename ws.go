@@ -63,6 +63,19 @@ func (s *Server) Push(userID, event, message string) (int, error) {
 	return s.PH.push(userID, event, message)
 }
 
+func (s *Server) Broadcast(event, message string) (int, error) {
+	cnt := 0
+	userIds, _ := s.PH.binder.FindUsers(event)
+	for _, uid := range userIds {
+		c, err := s.Push(uid, event, message)
+		if err != nil {
+			return cnt, err
+		}
+		cnt += c
+	}
+	return cnt, nil
+}
+
 // Drop find connections by userID and event, then close them. The userID can't
 // be empty. The event is ignored if it's empty.
 func (s *Server) Drop(userID, event string) (int, error) {
@@ -105,8 +118,8 @@ func NewWs() *Server {
 	return &Server{
 		WSPath:   serverDefaultWSPath,
 		PushPath: serverDefaultPushPath,
-		WH: wh,
-		PH: ph,
+		WH:       wh,
+		PH:       ph,
 	}
 }
 
